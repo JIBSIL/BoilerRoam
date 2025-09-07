@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoilerRoam - Course Schedule Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .controls h3 {
+            margin-bottom: 1rem;
+            color: #60a5fa;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            padding: 0.75rem;
+            border: 2px solid #475569;
+            background: #334155;
+            color: #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: #3f4f66;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        .sort-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .sort-btn {
+            padding: 0.5rem 1rem;
+            background: #475569;
+            border: 2px solid #64748b;
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .sort-btn:hover {
+            background: #64748b;
+            border-color: #60a5fa;
+        }
+
+        .sort-btn.active {
+            background: #60a5fa;
+            color: #0f172a;
+            border-color: #60a5fa;
+        }
+
+        .schedule-btn {
+            background: #16a34a !important;
+            border-color: #16a34a !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .schedule-btn:hover {
+            background: #15803d !important;
+            border-color: #15803d !important;
+        }
+
+        .schedule-active {
+            background: #16a34a !important;
+            border-color: #16a34a !important;
+            color: white !important;
+        }
+
+        .courses-container {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .course-count {
+            margin-bottom: 2rem;
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .course-card {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .course-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .course-title {
+            flex: 1;
+        }
+
+        .course-number {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 0.25rem;
+        }
+
+        .course-name {
+            font-size: 1.1rem;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .course-credits {
+            background: rgba(96, 165, 250, 0.2);
+            color: #93c5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .course-description {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .sections {
+            border-top: 1px solid rgba(71, 85, 105, 0.5);
+            padding-top: 1rem;
+        }
+
+        .section {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-info {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .section-number {
+            background: #60a5fa;
+            color: #0f172a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .section-type {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .section-crn {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .meeting-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .meeting-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .meeting-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .meeting-value {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .instructors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .instructor {
+            background: rgba(96, 165, 250, 0.15);
+            color: #93c5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
+        .no-sections {
+            color: #64748b;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            border: 3px solid #334155;
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .meeting-info {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .course-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BoilerRoam</h1>
+            <p>Course Schedule Viewer</p>
+        </div>
+
+        <div class="controls">
+            <h3>Search & Filter</h3>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search Courses</label>
+                    <input type="text" id="search" placeholder="Enter course number or title...">
+                </div>
+                <div class="filter-group">
+                    <label for="creditFilter">Credit Hours</label>
+                    <select id="creditFilter">
+                        <option value="">All Credit Hours</option>
+                        <option value="1">1 Credit</option>
+                        <option value="2">2 Credits</option>
+                        <option value="3">3 Credits</option>
+                        <option value="4">4 Credits</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="passingTime">Passing Time (minutes)</label>
+                    <select id="passingTime">
+                        <option value="0">No buffer</option>
+                        <option value="10">10 minutes</option>
+                        <option value="15" selected>15 minutes</option>
+                        <option value="20">20 minutes</option>
+                        <option value="30">30 minutes</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="sort-buttons">
+                <button class="sort-btn active" data-sort="number">Course Number</button>
+                <button class="sort-btn" data-sort="title">Title</button>
+                <button class="sort-btn" data-sort="time">Time</button>
+                <button class="sort-btn schedule-btn" id="makeSchedule">Make me a schedule</button>
+            </div>
+        </div>
+
+        <div class="courses-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                Loading courses...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ScheduleViewer {
+            constructor() {
+                this.courses = [];
+                this.filteredCourses = [];
+                this.currentSort = 'number';
+                this.sortDirection = 'asc';
+                this.isScheduleMode = false;
+                this.generatedSchedule = [];
+                this.init();
+            }
+
+            async init() {
+                await this.loadCourses();
+                this.setupEventListeners();
+                this.render();
+            }
+
+            async loadCourses() {
+                try {
+                    const response = await fetch('courses.json');
+                    this.courses = await response.json();
+                    this.filteredCourses = [...this.courses];
+                } catch (error) {
+                    console.error('Error loading courses:', error);
+                    document.querySelector('.courses-container').innerHTML = 
+                        '<div class="loading">Error loading courses. Please check the courses.json file.</div>';
+                }
+            }
+
+            setupEventListeners() {
+                // Search input
+                document.getElementById('search').addEventListener('input', (e) => {
+                    this.filterCourses();
+                });
+
+                // Filter selects
+                document.getElementById('creditFilter').addEventListener('change', () => {
+                    this.filterCourses();
+                });
+
+                // Sort buttons
+                document.querySelectorAll('.sort-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const sortBy = e.target.dataset.sort;
+                        
+                        if (sortBy) {
+                            // Regular sorting
+                            this.isScheduleMode = false;
+                            if (this.currentSort === sortBy) {
+                                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                            } else {
+                                this.currentSort = sortBy;
+                                this.sortDirection = 'asc';
+                            }
+                            
+                            // Update active button
+                            document.querySelectorAll('.sort-btn').forEach(b => {
+                                b.classList.remove('active', 'schedule-active');
+                            });
+                            e.target.classList.add('active');
+                            
+                            this.sortAndRender();
+                        }
+                    });
+                });
+
+                // Schedule generator button
+                document.getElementById('makeSchedule').addEventListener('click', () => {
+                    this.generateSchedule();
+                });
+            }
+
+            filterCourses() {
+                const search = document.getElementById('search').value.toLowerCase();
+                const creditFilter = document.getElementById('creditFilter').value;
+
+                this.filteredCourses = this.courses.filter(course => {
+                    // Search filter
+                    const matchesSearch = !search || 
+                        course.Number.toLowerCase().includes(search) || 
+                        course.Title.toLowerCase().includes(search);
+
+                    // Credit filter
+                    const matchesCredit = !creditFilter || 
+                        course.CreditHours.toString() === creditFilter;
+
+                    return matchesSearch && matchesCredit;
+                });
+
+                // Reset schedule mode when filters change
+                this.isScheduleMode = false;
+                document.querySelectorAll('.sort-btn').forEach(b => {
+                    b.classList.remove('schedule-active');
+                });
+
+                this.sortAndRender();
+            }
+
+            sortAndRender() {
+                this.sortCourses();
+                this.render();
+            }
+
+            sortCourses() {
+                this.filteredCourses.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (this.currentSort) {
+                        case 'number':
+                            aVal = parseInt(a.Number);
+                            bVal = parseInt(b.Number);
+                            break;
+                        case 'title':
+                            aVal = a.Title.toLowerCase();
+                            bVal = b.Title.toLowerCase();
+                            break;
+                        case 'time':
+                            // Get earliest meeting time for each course
+                            aVal = this.getEarliestTime(a);
+                            bVal = this.getEarliestTime(b);
+                            break;
+                        default:
+                            return 0;
+                    }
+
+                    if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            getEarliestTime(course) {
+                let earliestTime = '23:59:59'; // Start with latest possible time
+                
+                for (const cls of course.Classes) {
+                    for (const section of cls.Sections) {
+                        for (const meeting of section.Meetings) {
+                            if (meeting.StartTime && meeting.StartTime < earliestTime) {
+                                earliestTime = meeting.StartTime;
+                            }
+                        }
+                    }
+                }
+                
+                return earliestTime;
+            }
+
+            generateSchedule() {
+                this.isScheduleMode = true;
+                console.log('Starting schedule generation with', this.filteredCourses.length, 'available courses');
+                this.generatedSchedule = this.createRandomSchedule(this.filteredCourses);
+                console.log('Generated schedule with', this.generatedSchedule.length, 'courses');
+                
+                // Update button states
+                document.querySelectorAll('.sort-btn').forEach(b => {
+                    b.classList.remove('active', 'schedule-active');
+                });
+                document.getElementById('makeSchedule').classList.add('schedule-active');
+                
+                this.render();
+            }
+
+            createRandomSchedule(availableCourses) {
+                // Shuffle courses for randomness
+                const shuffled = [...availableCourses].sort(() => Math.random() - 0.5);
+                const schedule = [];
+                const occupiedTimeSlots = [];
+                const addedCourseNumbers = new Set(); // Track course numbers to prevent duplicates
+
+                for (const course of shuffled) {
+                    // Skip if we already have this course in our schedule
+                    if (addedCourseNumbers.has(course.Number)) {
+                        console.log(`Skipped duplicate course ${course.Number}`);
+                        continue;
+                    }
+
+                    // Get the best section for this course (first available section)
+                    const bestSection = this.getBestSectionForCourse(course);
+                    if (!bestSection) {
+                        console.log(`Skipped course ${course.Number} - no valid sections`);
+                        continue;
+                    }
+
+                    const courseTimeSlots = this.getSectionTimeSlots(bestSection);
+                    
+                    // Skip courses without valid time slots
+                    if (courseTimeSlots.length === 0) {
+                        console.log(`Skipped course ${course.Number} - no valid time slots`);
+                        continue;
+                    }
+                    
+                    // Check if this course conflicts with existing schedule
+                    const hasConflict = this.hasTimeConflict(courseTimeSlots, occupiedTimeSlots);
+                    
+                    if (!hasConflict) {
+                        // Create a copy of the course with only the selected section
+                        const scheduledCourse = {
+                            ...course,
+                            Classes: [{
+                                ...course.Classes[0],
+                                Sections: [bestSection]
+                            }]
+                        };
+                        
+                        console.log(`✓ Added course ${course.Number} - ${course.Title}`);
+                        console.log(`  Time slots:`, courseTimeSlots.map(slot => `${slot.day} ${slot.startTime}-${slot.endTime}`).join(', '));
+                        
+                        schedule.push(scheduledCourse);
+                        occupiedTimeSlots.push(...courseTimeSlots);
+                        addedCourseNumbers.add(course.Number);
+                    } else {
+                        console.log(`✗ Skipped course ${course.Number} due to time conflict`);
+                    }
+                }
+
+                console.log(`Final schedule: ${schedule.length} courses, ${occupiedTimeSlots.length} total time slots`);
+
+                // Sort the final schedule by earliest time
+                return this.sortScheduleByTime(schedule);
+            }
+
+            getBestSectionForCourse(course) {
+                // Find the section with the most complete meeting information
+                let bestSection = null;
+                let bestScore = -1;
+                
+                for (const cls of course.Classes) {
+                    for (const section of cls.Sections) {
+                        if (!section.Meetings || section.Meetings.length === 0) continue;
+                        
+                        // Score this section based on completeness of meeting info
+                        let score = 0;
+                        let hasValidMeeting = false;
+                        
+                        for (const meeting of section.Meetings) {
+                            if (meeting.DaysOfWeek && meeting.StartTime && meeting.Duration) {
+                                hasValidMeeting = true;
+                                score += 1;
+                                
+                                // Bonus points for having instructor and room info
+                                if (meeting.Instructors && meeting.Instructors.length > 0) score += 0.5;
+                                if (meeting.Room) score += 0.5;
+                            }
+                        }
+                        
+                        // Only consider sections with at least one valid meeting
+                        if (hasValidMeeting && score > bestScore) {
+                            bestScore = score;
+                            bestSection = section;
+                        }
+                    }
+                }
+                
+                return bestSection;
+            }
+
+            getSectionTimeSlots(section) {
+                const slots = [];
+                
+                for (const meeting of section.Meetings) {
+                    if (meeting.DaysOfWeek && meeting.StartTime && meeting.Duration) {
+                        try {
+                            const days = meeting.DaysOfWeek.split(', ');
+                            const startTime = meeting.StartTime.substring(0, 5); // Get HH:MM format
+                            const endTime = this.calculateEndTime(meeting.StartTime, meeting.Duration);
+                            
+                            // Validate the calculated end time
+                            if (endTime === startTime.substring(0, 5)) {
+                                console.warn(`Invalid duration calculation for meeting:`, meeting);
+                                continue;
+                            }
+                            
+                            days.forEach(day => {
+                                const trimmedDay = day.trim();
+                                if (trimmedDay) { // Only add non-empty days
+                                    slots.push({
+                                        day: trimmedDay,
+                                        startTime: startTime,
+                                        endTime: endTime
+                                    });
+                                }
+                            });
+                        } catch (error) {
+                            console.warn(`Error processing meeting time slots:`, error, meeting);
+                        }
+                    }
+                }
+                
+                return slots;
+            }
+
+            hasTimeConflict(newCourseSlots, existingSlots) {
+                for (const newSlot of newCourseSlots) {
+                    for (const existingSlot of existingSlots) {
+                        if (this.slotsOverlap(newSlot, existingSlot)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            slotsOverlap(slot1, slot2) {
+                // slot format: { day: 'Monday', startTime: '09:30', endTime: '10:45' }
+                if (slot1.day !== slot2.day) {
+                    return false;
+                }
+
+                const start1 = this.timeToMinutes(slot1.startTime);
+                const end1 = this.timeToMinutes(slot1.endTime);
+                const start2 = this.timeToMinutes(slot2.startTime);
+                const end2 = this.timeToMinutes(slot2.endTime);
+
+                // Get passing time buffer from UI
+                const passingTimeMinutes = parseInt(document.getElementById('passingTime')?.value || '15');
+
+                // Check for overlaps: two time slots conflict if they overlap at all
+                // considering the buffer time between the end of one class and start of another
+                
+                // Case 1: slot1 ends (with buffer) after slot2 starts AND slot1 starts before slot2 ends
+                const slot1ConflictsWithSlot2 = (end1 + passingTimeMinutes > start2) && (start1 < end2);
+                
+                // Case 2: slot2 ends (with buffer) after slot1 starts AND slot2 starts before slot1 ends  
+                const slot2ConflictsWithSlot1 = (end2 + passingTimeMinutes > start1) && (start2 < end1);
+                
+                const hasConflict = slot1ConflictsWithSlot2 || slot2ConflictsWithSlot1;
+                
+                // Debug logging
+                if (hasConflict) {
+                    console.log(`Conflict detected between ${slot1.day} ${slot1.startTime}-${slot1.endTime} and ${slot2.day} ${slot2.startTime}-${slot2.endTime} (${passingTimeMinutes}min buffer)`);
+                    console.log(`  Slot1: ${start1}-${end1} minutes, Slot2: ${start2}-${end2} minutes`);
+                }
+                
+                return hasConflict;
+            }
+
+            timeToMinutes(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+
+            sortScheduleByTime(schedule) {
+                return schedule.sort((a, b) => {
+                    const aTime = this.getEarliestTime(a);
+                    const bTime = this.getEarliestTime(b);
+                    return aTime.localeCompare(bTime);
+                });
+            }
+
+            getCourseTimeSlots(course) {
+                const slots = [];
+                
+                for (const cls of course.Classes) {
+                    for (const section of cls.Sections) {
+                        for (const meeting of section.Meetings) {
+                            if (meeting.DaysOfWeek && meeting.StartTime && meeting.Duration) {
+                                const days = meeting.DaysOfWeek.split(', ');
+                                const startTime = meeting.StartTime.substring(0, 5); // Get HH:MM format
+                                const endTime = this.calculateEndTime(meeting.StartTime, meeting.Duration);
+                                
+                                days.forEach(day => {
+                                    slots.push({
+                                        day: day.trim(),
+                                        startTime: startTime,
+                                        endTime: endTime
+                                    });
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                return slots;
+            }
+
+            calculateEndTime(startTime, duration) {
+                try {
+                    // Parse start time
+                    const timeStr = startTime.substring(0, 5); // Get HH:MM format
+                    const [startHours, startMinutes] = timeStr.split(':').map(Number);
+                    
+                    if (isNaN(startHours) || isNaN(startMinutes)) {
+                        console.warn(`Invalid start time format: ${startTime}`);
+                        return timeStr;
+                    }
+                    
+                    let totalStartMinutes = startHours * 60 + startMinutes;
+
+                    // Parse duration (format: PT1H15M, PT50M, etc.)
+                    const durationMatch = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                    if (!durationMatch) {
+                        console.warn(`Invalid duration format: ${duration}`);
+                        return timeStr; // fallback
+                    }
+
+                    const hours = parseInt(durationMatch[1] || 0);
+                    const minutes = parseInt(durationMatch[2] || 0);
+                    const durationMinutes = hours * 60 + minutes;
+                    
+                    // Duration must be positive
+                    if (durationMinutes <= 0) {
+                        console.warn(`Invalid duration: ${duration} (${durationMinutes} minutes)`);
+                        return timeStr;
+                    }
+
+                    // Calculate end time
+                    const totalEndMinutes = totalStartMinutes + durationMinutes;
+                    const endHours = Math.floor(totalEndMinutes / 60);
+                    const endMinutes = totalEndMinutes % 60;
+
+                    // Ensure hours don't exceed 24
+                    const finalHours = endHours % 24;
+
+                    return `${finalHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+                } catch (error) {
+                    console.error(`Error calculating end time for ${startTime} + ${duration}:`, error);
+                    return startTime.substring(0, 5); // fallback
+                }
+            }
+
+            formatTime(timeStr) {
+                const time = new Date(`2000-01-01T${timeStr}`);
+                return time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            }
+
+            formatDuration(duration) {
+                const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                if (!match) return duration;
+                
+                const hours = parseInt(match[1] || 0);
+                const minutes = parseInt(match[2] || 0);
+                
+                if (hours && minutes) return `${hours}h${minutes}m`;
+                if (hours) return `${hours}h`;
+                if (minutes) return `${minutes}m`;
+                return duration;
+            }
+
+            render() {
+                const container = document.querySelector('.courses-container');
+                
+                // Determine which courses to display
+                const coursesToDisplay = this.isScheduleMode ? this.generatedSchedule : this.filteredCourses;
+                
+                if (coursesToDisplay.length === 0) {
+                    const message = this.isScheduleMode ? 
+                        'No schedule could be generated with the current filters. Try adjusting your search criteria.' :
+                        'No courses found. Try adjusting your search or filter criteria.';
+                    
+                    container.innerHTML = `
+                        <div class="course-count">No courses found</div>
+                        <div class="no-sections">
+                            ${message}
+                        </div>
+                    `;
+                    return;
+                }
+
+                const coursesHtml = coursesToDisplay.map(course => {
+                    const sectionsHtml = course.Classes.map(cls => 
+                        cls.Sections.map(section => {
+                            const meetingsHtml = section.Meetings.map(meeting => `
+                                <div class="meeting-info">
+                                    <div class="meeting-detail">
+                                        <div class="meeting-label">Schedule</div>
+                                        <div class="meeting-value">${meeting.DaysOfWeek}</div>
+                                    </div>
+                                    <div class="meeting-detail">
+                                        <div class="meeting-label">Time</div>
+                                        <div class="meeting-value">
+                                            ${this.formatTime(meeting.StartTime)} for ${this.formatDuration(meeting.Duration)}
+                                        </div>
+                                    </div>
+                                    <div class="meeting-detail">
+                                        <div class="meeting-label">Location</div>
+                                        <div class="meeting-value">
+                                            ${meeting.Room?.Building?.ShortCode || ''}${meeting.Room?.Number || 'TBA'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="instructors">
+                                    ${meeting.Instructors.map(instructor => 
+                                        `<div class="instructor">${instructor.Name}</div>`
+                                    ).join('')}
+                                </div>
+                            `).join('');
+
+                            return `
+                                <div class="section">
+                                    <div class="section-header">
+                                        <div class="section-info">
+                                            <div class="section-number">Section ${section.Crn}</div>
+                                            <div class="section-type">${section.Type}</div>
+                                        </div>
+                                        <div class="section-crn">CRN: ${section.Crn}</div>
+                                    </div>
+                                    ${meetingsHtml}
+                                </div>
+                            `;
+                        }).join('')
+                    ).join('');
+
+                    return `
+                        <div class="course-card">
+                            <div class="course-header">
+                                <div class="course-title">
+                                    <div class="course-number">${course.Number}</div>
+                                    <div class="course-name">${course.Title}</div>
+                                </div>
+                                <div class="course-credits">${course.CreditHours} ${course.CreditHours === 1 ? 'Credit' : 'Credits'}</div>
+                            </div>
+                            ${course.Description ? `<div class="course-description">${course.Description}</div>` : ''}
+                            <div class="sections">
+                                ${sectionsHtml || '<div class="no-sections">No sections currently available</div>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const totalCredits = coursesToDisplay.reduce((sum, course) => sum + course.CreditHours, 0);
+                const countText = this.isScheduleMode ? 
+                    `Generated Schedule: ${coursesToDisplay.length} course${coursesToDisplay.length !== 1 ? 's' : ''} (${totalCredits} total credits)` :
+                    `Showing ${coursesToDisplay.length} course${coursesToDisplay.length !== 1 ? 's' : ''}`;
+
+                container.innerHTML = `
+                    <div class="course-count">${countText}</div>
+                    ${coursesHtml}
+                `;
+            }
+        }
+
+        // Initialize the schedule viewer
+        document.addEventListener('DOMContentLoaded', () => {
+            new ScheduleViewer();
+        });
+    </script>
+</body>
+</html>
